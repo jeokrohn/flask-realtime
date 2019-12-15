@@ -1,3 +1,4 @@
+werkzeug
 flask
 Flask-Session
 flask-bootstrap

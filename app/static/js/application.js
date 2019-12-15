@@ -1,11 +1,8 @@
 $(document).ready(function(){
     var socket=io.connect();
-    var lines=[];
-    var s='';
 
     socket.on("output", function(msg){
         console.log("Received new line: " + msg);
-        // $('#log').append('<p>' + msg.data + '</p>');
         $('#log').append(msg.data + '<br>');
     });
 

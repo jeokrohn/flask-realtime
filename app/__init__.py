@@ -21,10 +21,7 @@ def create_app(test_config=None):
     if test_config:
         app.config.from_mapping(test_config)
     app.config['SECRET_KEY'] = b'\xd5\xfbz\xbbVX\xf9\xfe\xaa\x053\xedg\x8e\xa2;'
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+
     app.register_blueprint(interactive.bp)
     session.init_app(app)
     bootstrap.init_app(app)

@@ -14,40 +14,65 @@ bp = Blueprint('interactive', __name__, url_prefix=None)
 
 
 class Token:
-    registry: Dict[str, "Token"] = {}
+    # Token registry mapping from user ID to token for that user
+    _registry: Dict[str, "Token"] = {}
+
+    # minimal remaining token lifetime; minimum time before token will be refreshed
     MIN_TOKEN_LIFETIME = 300
 
     def __init__(self, access_token, expires_in, refresh_token, refresh_token_expires_in):
-        self.access_token = access_token
-        self.exprires_in = expires_in
-        self.refresh_token = refresh_token
-        self.refresh_token_expires_in = refresh_token_expires_in
+        self.access_token: str = access_token
+        self.exprires_in: int = expires_in
+        self.refresh_token: str = refresh_token
+        self.refresh_token_expires_in: int = refresh_token_expires_in
         self.access_token_exprires_at: datetime = None
         self.refresh_token_exprires_at: datetime = None
         self.update_expiry()
-        pass
 
-    def update_expiry(self):
+    def update_expiry(self)->None:
+        """
+        Determine the absolute token expiration based on exprires_in and current time
+        :return: NOne
+        """
         self.access_token_exprires_at = datetime.utcnow() + timedelta(0, self.exprires_in)
         self.refresh_token_exprires_at = datetime.utcnow() + timedelta(0, self.refresh_token_expires_in)
 
     @staticmethod
     def get_token(user_id: str) -> Optional["Token"]:
-        return Token.registry.get(user_id)
+        """
+        Obtain token for given user id
+        :param user_id: user id to obtain token for
+        :return: token registered for that user .. or None
+        """
+        return Token._registry.get(user_id)
 
     @staticmethod
     def from_dict(user_id: str, d: Dict) -> "Token":
-        assert Token.registry.get(user_id) is None
+        """
+        Create token from data returned by identity service
+        :param user_id: user id to register the resulting token for
+        :param d: token data
+        :return: created token
+        """
+        assert Token._registry.get(user_id) is None
         token = Token(**d)
-        Token.registry[user_id] = token
+        Token._registry[user_id] = token
         return token
 
     @property
     def needs_refresh(self) -> bool:
+        """
+        Determine if a given access token needs refresh
+        :return: True/False - does the access token need refresh?
+        """
         seconds_remaining = (self.access_token_exprires_at - datetime.utcnow()).total_seconds()
         return seconds_remaining < Token.MIN_TOKEN_LIFETIME
 
-    def refresh(self):
+    def refresh(self)->None:
+        """
+        Refresh the access token
+        :return: None
+        """
         tokens = WxHelper.access_token(self.refresh_token)
         for k, v in tokens.items():
             self.__dict__[k] = v
@@ -55,6 +80,13 @@ class Token:
 
     @staticmethod
     def assert_token(user_id: str, refresh_token: str) -> "Token":
+        """
+        Make sure an access toekn is registered for a given user id. If no access token is registered then
+        a new access token is obtained based on the refresh token passed
+        :param user_id: user ID
+        :param refresh_token: refresh token
+        :return: access token registered for the given user
+        """
         token = Token.get_token(user_id)
         if token is None:
             token = WxHelper.access_token(refresh_token)
@@ -63,6 +95,10 @@ class Token:
 
     @property
     def bearer(self) -> str:
+        """
+        Bearer string to be used in Authorization header
+        :return:
+        """
         if self.needs_refresh:
             self.refresh()
         return f'Bearer {self.access_token}'
