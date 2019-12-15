@@ -1,0 +1,12 @@
+version: '3'
+services:
+  flask:
+    image: jeokrohn/app-flask
+    volumes:
+      - $PWD/flask_session:/home/flaskdemo/flask_session
+  nginx:
+    image: jeokrohn/app-nginx
+    ports:
+      - 5000:80
+    depends_on:
+      - flask

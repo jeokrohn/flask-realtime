@@ -1,0 +1,35 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}
+Flask Playground
+{% endblock %}
+
+{% block navbar %}
+<!--
+<nav class="navbar navbar-default">
+    ... navigation bar here (see complete code on GitHub) ...
+</nav>
+-->
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-info" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {# application content needs to be provided in the app_content block #}
+    {% block app_content %}{% endblock %}
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+{{super()}}
+<script src="//cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+{% endblock %}

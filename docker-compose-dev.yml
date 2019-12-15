@@ -1,0 +1,26 @@
+version: '3'
+services:
+  flask:
+    image: app-flask
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - $PWD/flask_session:/home/flaskdemo/flask_session
+      # remove the following two for production deployment
+      - $PWD/app:/home/flaskdemo/app
+      - $PWD/webexintegration:/home/flaskdemo/webexintegration
+
+  nginx:
+    image: app-nginx
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    # remove volumes for production deployment
+    volumes:
+      - $PWD/nginx:/etc/nginx
+      - $PWD/app/static/:/usr/share/nginx/html/static
+    ports:
+      - 5000:80
+    depends_on:
+      - flask

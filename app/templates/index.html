@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Playing with Python and Websockets
+{% endblock title %}
+
+{% block app_content %}
+Welcome {{ user }}: nothing to see, ...
+
+<div>
+    <button id="start" type="button" class="btn btn-primary">Start</button>
+    <button id="stop" type="button" class="btn btn-primary">Stop</button>
+</div>
+
+<div class="container" id="content">
+    <div class="row">
+        <h2>Output:</h2>
+        <div id="log">
+        </div> <!-- /#log -->
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<script src="static/js/application.js"></script>
+{% endblock %}
