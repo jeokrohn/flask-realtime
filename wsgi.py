@@ -11,8 +11,20 @@ assert all((os.getenv('CLIENT_ID'), os.getenv('CLIENT_SECRET'), os.getenv('REDIR
     'CLIENT_ID, CLIENT_SECRET, REDIRECT_URI and SCOPE need to be defined as environment variables'
 
 from app import create_app, socketio
+from redis import Redis
+from app.interactive import Token
+import logging
 
-app = create_app()
+#logging.basicConfig(level=logging.DEBUG)
+
+redis_session = Redis(host='redis')
+Token.set_redis(redis_session)
+
+config = dict(
+    SESSION_REDIS=redis_session
+)
+
+app = create_app(config)
 
 # server does NOT listen on localhost b/c the server is deployed in a container behind an Nginx proxy
 socketio.run(app, host='0.0.0.0', log_output=True)

@@ -3,4 +3,4 @@ FROM nginx:alpine
 COPY app/static /usr/share/nginx/html/static
 COPY nginx /etc/nginx
 
-EXPOSE 80
+EXPOSE 5000

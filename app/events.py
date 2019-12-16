@@ -13,11 +13,11 @@ def count_thread(user_id, sid, running):
     log.debug(f'count started for sid={sid}')
 
     token = Token.get_token(user_id)
-    log.debug(f'count thread: refresh token before refresh valid until {token.refresh_token_exprires_at}')
-    log.debug(f'count thread:  access token before refresh valid until {token.access_token_exprires_at}')
+    log.debug(f'count thread: refresh token before refresh valid until {token.refresh_token_expires_at}')
+    log.debug(f'count thread:  access token before refresh valid until {token.access_token_expires_at}')
     token.refresh()
-    log.debug(f'count thread:  refresh token after refresh valid until {token.refresh_token_exprires_at}')
-    log.debug(f'count thread:   access token after refresh valid until {token.access_token_exprires_at}')
+    log.debug(f'count thread:  refresh token after refresh valid until {token.refresh_token_expires_at}')
+    log.debug(f'count thread:   access token after refresh valid until {token.access_token_expires_at}')
 
     c = 0
     while running():

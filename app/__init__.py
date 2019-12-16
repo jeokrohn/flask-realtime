@@ -11,7 +11,7 @@ socketio = SocketIO(manage_sessions=False, engineio_logger=True)
 
 
 class DefaultConfig:
-    SESSION_TYPE = 'filesystem'
+    SESSION_TYPE = 'redis'
 
 
 def create_app(test_config=None):
@@ -25,7 +25,7 @@ def create_app(test_config=None):
     app.register_blueprint(interactive.bp)
     session.init_app(app)
     bootstrap.init_app(app)
-    socketio.init_app(app)
+    socketio.init_app(app, cors_allowed_origins='*')
 
     return app
 

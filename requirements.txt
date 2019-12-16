@@ -6,3 +6,4 @@ flask-socketio
 python-dotenv
 requests
 eventlet
+redis

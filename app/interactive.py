@@ -7,35 +7,40 @@ from typing import Dict, Optional
 from datetime import datetime, timedelta
 import os
 import logging
+from redis import Redis
+import json
 
 log = logging.getLogger(__name__)
+token_log = logging.getLogger(f'{__name__}.token')
 
 bp = Blueprint('interactive', __name__, url_prefix=None)
 
 
 class Token:
-    # Token registry mapping from user ID to token for that user
-    _registry: Dict[str, "Token"] = {}
+    # Redis connection to save tokens
+    _redis: Redis = None
 
-    # minimal remaining token lifetime; minimum time before token will be refreshed
-    MIN_TOKEN_LIFETIME = 300
+    @staticmethod
+    def set_redis(redis: Redis) -> None:
+        token_log.debug(f'Redis connection set: {redis}')
+        Token._redis = redis
 
-    def __init__(self, access_token, expires_in, refresh_token, refresh_token_expires_in):
-        self.access_token: str = access_token
-        self.exprires_in: int = expires_in
-        self.refresh_token: str = refresh_token
-        self.refresh_token_expires_in: int = refresh_token_expires_in
-        self.access_token_exprires_at: datetime = None
-        self.refresh_token_exprires_at: datetime = None
-        self.update_expiry()
-
-    def update_expiry(self)->None:
+    @staticmethod
+    def _redis_key(user_id: str) -> str:
         """
-        Determine the absolute token expiration based on exprires_in and current time
-        :return: NOne
+        Key to use wehen storing token for a given user id in Redis
+        :param user_id: user id
+        :return: Redis key
         """
-        self.access_token_exprires_at = datetime.utcnow() + timedelta(0, self.exprires_in)
-        self.refresh_token_exprires_at = datetime.utcnow() + timedelta(0, self.refresh_token_expires_in)
+        return f'Token:{user_id}'
+
+    @property
+    def redis_key(self)->str:
+        """
+        Key to use when storing tokenin Redis
+        :return: key
+        """
+        return Token._redis_key(self.user_id)
 
     @staticmethod
     def get_token(user_id: str) -> Optional["Token"]:
@@ -44,20 +49,75 @@ class Token:
         :param user_id: user id to obtain token for
         :return: token registered for that user .. or None
         """
-        return Token._registry.get(user_id)
+        assert Token._redis is not None
+        jd = Token._redis.get(Token._redis_key(user_id))
+        if jd is None:
+            token_log.debug(f'get_token: {user_id}:None')
+        else:
+            token_log.debug(f'get_token: {user_id}:{jd}')
+            return Token.from_json(jd, commit=False)
+        return None
+
+    def commit(self) -> None:
+        """
+        Commit a Token to Redis
+        :return: None
+        """
+        jd = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        # convert datetimes to str
+        for k in jd:
+            if k.endswith('_at'):
+                jd[k] = jd[k].isoformat()
+        jd = json.dumps(jd)
+        token_log.debug(f'commit: {self.redis_key}/{jd}')
+        Token._redis.set(self.redis_key, jd)
+
+    # minimal remaining token lifetime; minimum time before token will be refreshed
+    MIN_TOKEN_LIFETIME = 300
+
+    def __init__(self, user_id, access_token, expires_in, refresh_token, refresh_token_expires_in,
+                 access_token_expires_at=None, refresh_token_expires_at=None):
+        assert Token._redis is not None
+        self.user_id: str = user_id
+        self.access_token: str = access_token
+        self.expires_in: int = expires_in
+        self.refresh_token: str = refresh_token
+        self.refresh_token_expires_in: int = refresh_token_expires_in
+        self.access_token_expires_at: datetime = access_token_expires_at
+        self.refresh_token_expires_at: datetime = refresh_token_expires_at
+        if access_token_expires_at is None:
+            self.update_expiry()
+
+    def update_expiry(self) -> None:
+        """
+        Determine the absolute token expiration based on expires_in and current time
+        :return: NOne
+        """
+        self.access_token_expires_at = datetime.utcnow() + timedelta(0, self.expires_in)
+        self.refresh_token_expires_at = datetime.utcnow() + timedelta(0, self.refresh_token_expires_in)
 
     @staticmethod
-    def from_dict(user_id: str, d: Dict) -> "Token":
+    def from_dict(user_id: str, d: Dict, commit=True) -> 'Token':
         """
         Create token from data returned by identity service
         :param user_id: user id to register the resulting token for
         :param d: token data
         :return: created token
         """
-        assert Token._registry.get(user_id) is None
-        token = Token(**d)
-        Token._registry[user_id] = token
+        d.pop('user_id', None)
+        token = Token(user_id=user_id, **d)
+        if commit:
+            token.commit()
         return token
+
+    @staticmethod
+    def from_json(json_str, commit=True) -> 'Token':
+        d = json.loads(json_str)
+        # datetime objects
+        for k in d:
+            if k.endswith('_at'):
+                d[k] = datetime.fromisoformat(d[k])
+        return Token.from_dict(d['user_id'], d, commit=commit)
 
     @property
     def needs_refresh(self) -> bool:
@@ -65,10 +125,10 @@ class Token:
         Determine if a given access token needs refresh
         :return: True/False - does the access token need refresh?
         """
-        seconds_remaining = (self.access_token_exprires_at - datetime.utcnow()).total_seconds()
+        seconds_remaining = (self.access_token_expires_at - datetime.utcnow()).total_seconds()
         return seconds_remaining < Token.MIN_TOKEN_LIFETIME
 
-    def refresh(self)->None:
+    def refresh(self) -> None:
         """
         Refresh the access token
         :return: None
@@ -77,11 +137,12 @@ class Token:
         for k, v in tokens.items():
             self.__dict__[k] = v
         self.update_expiry()
+        self.commit()
 
     @staticmethod
     def assert_token(user_id: str, refresh_token: str) -> "Token":
         """
-        Make sure an access toekn is registered for a given user id. If no access token is registered then
+        Make sure an access token is registered for a given user id. If no access token is registered then
         a new access token is obtained based on the refresh token passed
         :param user_id: user ID
         :param refresh_token: refresh token
@@ -89,6 +150,7 @@ class Token:
         """
         token = Token.get_token(user_id)
         if token is None:
+            token_log.debug(f'creating new access token from refresh token: {user_id}:{refresh_token}')
             token = WxHelper.access_token(refresh_token)
             token = Token.from_dict(user_id, token)
         return token
@@ -225,6 +287,9 @@ def redirect_url():
     user = WxHelper.me(tokens['access_token'])
     session['user'] = f'{user["displayName"]} ({user["emails"][0]})'
     session['user_id'] = user['id']
+
+    # create and commit new access token for user
+    Token.from_dict(user['id'], tokens)
 
     log.debug(f'redirect: sid={session.sid}, got user info: {session["user"]}, {session["user_id"]}')
     url = session.pop('url')

@@ -1,12 +1,18 @@
 version: '3'
 services:
+  redis:
+    image: jeokrohn/app-redis
+    volumes:
+      - $PWD/redis_data:/data
+
   flask:
     image: jeokrohn/app-flask
-    volumes:
-      - $PWD/flask_session:/home/flaskdemo/flask_session
+    depends_on:
+      - redis
+
   nginx:
     image: jeokrohn/app-nginx
     ports:
-      - 5000:80
+      - 5000:5000
     depends_on:
       - flask

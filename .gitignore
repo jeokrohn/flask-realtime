@@ -126,7 +126,8 @@ dmypy.json
 .pyre/
 
 .idea/
-flask_session
 .vscode/
 webexintegration/
+redis_data/
+To Do
 
