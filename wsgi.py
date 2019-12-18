@@ -17,6 +17,9 @@ import logging
 
 #logging.basicConfig(level=logging.DEBUG)
 
+# this guys is a little "chatty" at level INFO
+logging.getLogger('engineio.server').setLevel(logging.WARNING)
+
 redis_session = Redis(host='redis')
 Token.set_redis(redis_session)
 

@@ -120,13 +120,16 @@ class Token:
         return Token.from_dict(d['user_id'], d, commit=commit)
 
     @property
+    def lifetime_remaining_seconds(self):
+        return (self.access_token_expires_at - datetime.utcnow()).total_seconds()
+
+    @property
     def needs_refresh(self) -> bool:
         """
         Determine if a given access token needs refresh
         :return: True/False - does the access token need refresh?
         """
-        seconds_remaining = (self.access_token_expires_at - datetime.utcnow()).total_seconds()
-        return seconds_remaining < Token.MIN_TOKEN_LIFETIME
+        return self.lifetime_remaining_seconds < Token.MIN_TOKEN_LIFETIME
 
     def refresh(self) -> None:
         """

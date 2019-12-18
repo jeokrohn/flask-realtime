@@ -5,6 +5,7 @@ import logging
 from .flaskthread import FlaskThread
 from .interactive import Token
 import functools
+from .list_spaces import list_spaces
 
 log = logging.getLogger(__name__)
 
@@ -41,10 +42,10 @@ def start_request() -> None:
     log.debug(f'start_request {request.sid}')
     thread = FlaskThread.get(request.sid)
     if thread is None:
-        thread = FlaskThread.for_session(sid=request.sid, target=functools.partial(count_thread, session['user_id']),
-                                         name=f'count-{request.sid}')
+        thread = FlaskThread.for_session(sid=request.sid, target=functools.partial(list_spaces, session['user_id']),
+                                         name=f'task-{request.sid}')
+        log.debug(f'starting thread for {request.sid}')
         thread.start()
-        log.debug(f'started counting thread for {request.sid}')
     else:
         log.warning(f'thread already running for {request.sid}')
 

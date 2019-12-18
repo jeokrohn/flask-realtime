@@ -137,6 +137,7 @@ class FlaskThread(Thread):
         """
         log.debug(f'{self}.stop()')
         self.stop_event.set()
+        log.debug(f'{self}.stop(): done')
 
     def running(self) -> bool:
         """
@@ -163,6 +164,7 @@ class FlaskThread(Thread):
         # * sid
         # * a method to check whether the thread should terminate
         self.flask_target(self.sid, self.running, *args, **kwargs)
+
         log.debug(f'{self}.wrapped_target: target code terminated')
 
         # remove thread from registry
