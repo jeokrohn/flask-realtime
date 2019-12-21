@@ -5,17 +5,19 @@ Playing with Python and Websockets
 {% endblock title %}
 
 {% block app_content %}
-Welcome {{ user }}: nothing to see, ...
-
+Authenticated as {{ user }}.
 <div>
     <button id="start" type="button" class="btn btn-primary">Start</button>
     <button id="stop" type="button" class="btn btn-primary">Stop</button>
+    <button id="clear" type="button" class="btn btn-primary">Clear</button>
+    <a href="/logout" class="btn btn-primary" role="button">Logout</a>
 </div>
 
 <div class="container" id="content">
     <div class="row">
         <h2>Output:</h2>
-        <div id="log">
+        <div class="well well-sm" id="log" style="height: 30em; overflow-y: scroll;">
+        <!div class="well well-sm" id="log" style="max-height: 40em; display: block; overflow-y: scroll;">
         </div> <!-- /#log -->
     </div>
 </div>
