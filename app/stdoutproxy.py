@@ -7,7 +7,7 @@ import io
 # directory of non-default stdouts
 thread_proxies: Dict[int, io.TextIOBase] = {}
 
-# save the dedault stdout; needed by the proxy as defaul for threads w/o redirection
+# save the default stdout; needed by the proxy as defaul for threads w/o redirection
 _default_stdout = sys.stdout
 
 

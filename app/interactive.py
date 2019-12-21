@@ -301,6 +301,25 @@ def redirect_url():
     # redirect back to the url from which we initiated the OAuth auth flow
     return redirect(url)
 
+@bp.route('/logout')
+def logout():
+    """
+    logout request; !!!! open
+    """
+    # https://idbroker.webex.com/idb/oauth2/v1/logout?token=OTZjZTNlNDctYmQxNC00NWNiLTgzM2UtNWMwYWZjZDcxZTZlZmE1MzBmNDAtODFi_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f&cisService=common&goto=https%3A%2F%2Fdeveloper.webex.com%2Fauth%2Fcode
+    # what is the current token?
+    refresh__token = session.get('refresh_token')
+    query = dict(
+        token = refresh__token,
+        cisService = 'common'
+    )
+    qs = urlencode(query)
+    url = f'https://idbroker.webex.com/idb/oauth2/v1/logout?{qs}'
+
+    # trigger re-authentication
+    session.pop('user', None)
+    return redirect(url)
+
 
 @bp.errorhandler(404)
 def not_found_error(error):
