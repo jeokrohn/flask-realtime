@@ -28,6 +28,17 @@ in each space. This code uses `asyncio` to optimize the performance. A
 minimal asynchronous Webex Teams API framework is included in 
 `app/webexteamsasyncapi.py`. This minimal framework can easily be expanded.
 
+The server side handling of websockets is based on `flask-socketio`. `FlaskThread`
+uses a pipe to communicate between the thread running the target code and the 
+`eventlet` based Flask code. A `_pipe_processor` greenlet is spawned for each thread. 
+It reads from the pipe the thread sends output to and then sends the output
+to the websocket.
+
+Before executing the code within the `FlaskThread` stdout for the thread is redirected 
+to a `PipeIO` instance which is responsible for encapsulating output and
+sending it to the pipe connecting the thread and the `_pipe_processor` 
+greenlet.
+
 ## Building the docker images
 
 All docker images can be build using this command:
@@ -54,6 +65,18 @@ you only need to restart the containers.
 
 The `app-flask` container expects to find a file `webexintegration.env` (see the main
 directory for a template) containing the details of the Webex Teams integration to use.
+These variables need to be defined:
+* CLIENT_ID: client id of the integration defined on developer.webex.com
+* CLIENT_SECRET:  client secret of the integration defined on developer.webex.com
+* REDIRECT_URI: redirect URI of the integration. Needs to be set to
+`http://localhost:5000/redirect` because that is the URL the app
+registers for the OAuth callback.
+* SCOPE: as defined for the integration on developer.webex.com; `spark:all spark:kms`
+grants all rights to the integration.
+
+Make sure to create a `redis_data` directory before starting the containers: this is
+the directory mapped into the Redis container. The Redis server will save the persistent
+data into this directory.
 
 When browsing to the main page (`http:localhost:5000`) the app initiates
 a SAML 2.0 OAuth authorization code authorization flow to obtain refresh 
