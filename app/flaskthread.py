@@ -163,7 +163,12 @@ class FlaskThread(Thread):
         # call the target. First two parameters are:
         # * sid
         # * a method to check whether the thread should terminate
-        self.flask_target(self.sid, self.running, *args, **kwargs)
+        try:
+            self.flask_target(self.sid, self.running, *args, **kwargs)
+        except Exception as e:
+            log.error(f'Execution failed {e}')
+            print(f'Execution failed {e}')
+            raise
 
         log.debug(f'{self}.wrapped_target: target code terminated')
 
