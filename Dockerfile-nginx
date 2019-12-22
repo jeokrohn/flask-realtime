@@ -1,6 +1,9 @@
 FROM nginx:alpine
 
 COPY app/static /usr/share/nginx/html/static
-COPY nginx /etc/nginx
+COPY nginx/*.conf /etc/nginx/
+COPY nginx/mime.types /etc/nginx/
+RUN mkdir /etc/nginx/logs
+RUN chown nginx:nginx /etc/nginx/logs
 
 EXPOSE 5000

@@ -10,7 +10,7 @@ services:
     depends_on:
       - redis
     volumes:
-      -"./webexintegration:/home/flaskdemo/webexintegration"
+      - "./webexintegration:/home/flaskdemo/webexintegration"
 
   nginx:
     image: jeokrohn/flask-realtime-nginx
