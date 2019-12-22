@@ -13,10 +13,10 @@ jobs:
       run: |
         docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
         docker-compose -f docker-compose-dev.yml build
-        docker tag app-flask ${{ secrets.DOCKER_USER }}/app-flask
-        docker tag app-nginx ${{ secrets.DOCKER_USER }}/app-nginx
-        docker tag app-redis ${{ secrets.DOCKER_USER }}/app-redis
-        docker push ${{ secrets.DOCKER_USER }}/app-flask
-        docker push ${{ secrets.DOCKER_USER }}/app-nginx
-        docker push ${{ secrets.DOCKER_USER }}/app-redis
+        docker tag flask-realtime-flask ${{ secrets.DOCKER_USER }}/flask-realtime-flask
+        docker tag flask-realtime-nginx ${{ secrets.DOCKER_USER }}/flask-realtime-nginx
+        docker tag flask-realtime-redis ${{ secrets.DOCKER_USER }}/flask-realtime-redis
+        docker push ${{ secrets.DOCKER_USER }}/flask-realtime-flask
+        docker push ${{ secrets.DOCKER_USER }}/flask-realtime-nginx
+        docker push ${{ secrets.DOCKER_USER }}/flask-realtime-redis
         docker logout

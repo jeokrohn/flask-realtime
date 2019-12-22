@@ -160,7 +160,6 @@ class WebexTeamsAsyncAPI:
         return
 
     # Spaces
-
     @property
     def rooms_endpoint(self):
         return self.endpoint('rooms')

@@ -1,19 +1,19 @@
 version: '3'
 services:
   redis:
-    image: jeokrohn/app-redis
+    image: jeokrohn/flask-realtime-redis
     volumes:
       - "./redis_data:/data"
 
   flask:
-    image: jeokrohn/app-flask
+    image: jeokrohn/flask-realtime-flask
     depends_on:
       - redis
     volumes:
       -"./webexintegration:/home/flaskdemo/webexintegration"
 
   nginx:
-    image: jeokrohn/app-nginx
+    image: jeokrohn/flask-realtime-nginx
     ports:
       - 5000:5000
     depends_on:

@@ -1,7 +1,7 @@
 version: '3'
 services:
   redis:
-    image: app-redis
+    image: flask-realtime-redis
     build:
       context: .
       dockerfile: Dockerfile-redis
@@ -9,7 +9,7 @@ services:
       - "./redis_data:/data"
 
   flask:
-    image: app-flask
+    image: flask-realtime-flask
     build:
       context: .
       dockerfile: Dockerfile
@@ -20,7 +20,7 @@ services:
       - redis
 
   nginx:
-    image: app-nginx
+    image: flask-realtime-nginx
     build:
       context: .
       dockerfile: Dockerfile-nginx
