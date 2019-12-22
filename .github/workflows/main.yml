@@ -9,14 +9,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: build and push images
+    - name: login
       run: |
         docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+    - name: build
+      run: |
         docker-compose -f docker-compose-dev.yml build
+    - name: tag
+      run: |
         docker tag flask-realtime-flask ${{ secrets.DOCKER_USER }}/flask-realtime-flask
         docker tag flask-realtime-nginx ${{ secrets.DOCKER_USER }}/flask-realtime-nginx
         docker tag flask-realtime-redis ${{ secrets.DOCKER_USER }}/flask-realtime-redis
+    - name: push
+      run: |
         docker push ${{ secrets.DOCKER_USER }}/flask-realtime-flask
         docker push ${{ secrets.DOCKER_USER }}/flask-realtime-nginx
         docker push ${{ secrets.DOCKER_USER }}/flask-realtime-redis
+    - name: logout
+      run: |
         docker logout
