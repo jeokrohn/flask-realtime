@@ -1,0 +1,21 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: build and push images
+      run: |
+        docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+        docker-compose -f docker-compose-dev.yml build
+        docker tag app-flask ${{ secrets.DOCKER_USER }}/app-flask
+        docker tag app-nginx ${{ secrets.DOCKER_USER }}/app-nginx
+        docker tag app-redis ${{ secrets.DOCKER_USER }}/app-redis
+        docker push ${{ secrets.DOCKER_USER }}/app-flask
+        docker push ${{ secrets.DOCKER_USER }}/app-nginx
+        docker push ${{ secrets.DOCKER_USER }}/app-redis
