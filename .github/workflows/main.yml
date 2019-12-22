@@ -11,6 +11,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: build and push images
       run: |
+        echo ${{ secrets.DOCKER_USER }}
+        echo ${{ secrets.DOCKER_PASS }}
         docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
         docker-compose -f docker-compose-dev.yml build
         docker tag app-flask ${{ secrets.DOCKER_USER }}/app-flask
