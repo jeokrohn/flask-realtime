@@ -1,13 +1,17 @@
+"""
+Simple per thread proxy functionality for stdout based on werkzeug LocalProxy
+"""
 import sys
-import werkzeug
-import threading
-from typing import Dict
 import io
+from typing import Dict
+import threading
+
+import werkzeug
 
 # directory of non-default stdouts
 thread_proxies: Dict[int, io.TextIOBase] = {}
 
-# save the default stdout; needed by the proxy as defaul for threads w/o redirection
+# save the default stdout; needed by the proxy as default for threads w/o redirection
 _default_stdout = sys.stdout
 
 

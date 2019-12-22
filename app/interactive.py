@@ -1,14 +1,15 @@
-from flask import Blueprint, render_template, session, current_app, request, redirect
 from urllib.parse import urlencode, parse_qs
 from uuid import uuid4
-from requests import post, get
 from functools import wraps
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 import os
 import logging
-from redis import Redis
 import json
+
+from requests import post, get
+from flask import Blueprint, render_template, session, current_app, request, redirect
+from redis import Redis
 
 log = logging.getLogger(__name__)
 token_log = logging.getLogger(f'{__name__}.token')

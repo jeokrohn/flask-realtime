@@ -1,31 +1,16 @@
-from . import socketio
-from flask import session, request
-from time import sleep
-import logging
-from .flaskthread import FlaskThread
-from .interactive import Token
+"""
+Handling of websocket events
+"""
 import functools
+import logging
+
+from flask import session, request
+
+from . import socketio
+from .flaskthread import FlaskThread
 from .list_spaces import list_spaces
 
 log = logging.getLogger(__name__)
-
-
-def count_thread(user_id, sid, running):
-    log.debug(f'count started for sid={sid}')
-
-    token = Token.get_token(user_id)
-    log.debug(f'count thread: refresh token before refresh valid until {token.refresh_token_expires_at}')
-    log.debug(f'count thread:  access token before refresh valid until {token.access_token_expires_at}')
-    token.refresh()
-    log.debug(f'count thread:  refresh token after refresh valid until {token.refresh_token_expires_at}')
-    log.debug(f'count thread:   access token after refresh valid until {token.access_token_expires_at}')
-
-    c = 0
-    while running():
-        print(f'latest count={c}')
-        c += 1
-        sleep(0.1)
-    log.debug(f'count stopped for sid={sid}')
 
 
 @socketio.on('connect')
@@ -42,8 +27,9 @@ def start_request() -> None:
     log.debug(f'start_request {request.sid}')
     thread = FlaskThread.get(request.sid)
     if thread is None:
-        thread = FlaskThread.for_session(sid=request.sid, target=functools.partial(list_spaces, session['user_id']),
-                                         name=f'task-{request.sid}')
+        # create FlaskThread; pass user id as additional parameter to list_paces()
+        thread = FlaskThread.for_session(sid=request.sid, target=list_spaces, name=f'task-{request.sid}',
+                                         user_id=session['user_id'])
         log.debug(f'starting thread for {request.sid}')
         thread.start()
     else:

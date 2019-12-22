@@ -1,12 +1,13 @@
-from .interactive import Token
 import logging
 import sys
-import webexteamssdk
 from datetime import timedelta
 import asyncio
+from typing import Callable, Tuple
 
-from typing import Optional, List, Callable, AsyncIterator, Tuple
+import webexteamssdk
+
 from .webexteamsasyncapi import WebexTeamsAsyncAPI
+from .interactive import Token
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,8 @@ async def as_list_spaces(access_token: str, running: Callable[[], bool]):
     return
 
 
-def list_spaces(user_id: str, sid: str, running: Callable[[], bool]):
+def list_spaces(sid: str, running: Callable[[], bool], user_id: str):
+    # add a logging handler to stdout; logging output will be sent to the client via websocket
     format = logging.Formatter(fmt='{levelname:8s} list_spaces: {message}', style='{')
     handler = logging.StreamHandler(stream=sys.stdout)
     handler.setLevel(logging.ERROR)
@@ -90,6 +92,7 @@ def list_spaces(user_id: str, sid: str, running: Callable[[], bool]):
                 f'had to refresh access token. New lifetime: '
                 f'{timedelta(seconds=access_token.lifetime_remaining_seconds)}')
 
+        # run asynchronous task
         asyncio.run(as_list_spaces(access_token.access_token, running))
         return
 

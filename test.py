@@ -1,10 +1,12 @@
+import logging
+
 from dotenv import load_dotenv
 
 load_dotenv('webexintegration/webexintegration.env')
 
 from app import create_app, socketio
-import logging
 from redis import Redis
+
 from app.interactive import Token
 
 if __name__ == '__main__':

@@ -2,10 +2,12 @@ import logging
 from threading import Lock, Thread, Event
 import base64
 import io
-import eventlet
-import eventlet.greenio
 import socket
 from typing import Dict, Optional
+
+import eventlet
+import eventlet.greenio
+
 from . import stdoutproxy
 from . import socketio
 

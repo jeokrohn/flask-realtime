@@ -1,8 +1,11 @@
-import os
+"""
+Main flask application
+"""
 from flask import Flask
 from flask_session import Session
 from flask_bootstrap import Bootstrap
 from flask_socketio import SocketIO
+
 from . import interactive
 
 bootstrap = Bootstrap()

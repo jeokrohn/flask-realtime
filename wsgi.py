@@ -1,10 +1,11 @@
-from dotenv import load_dotenv
+import logging
 import os
 
 # load parameters of Webex Integration to be used
 # The Dockerfile makes sure that the webexintegration.env from the project root is copied to the webexintegration
 # directory
 # For the test environment you want to make sure to create a webexintegration directory with the config file
+from dotenv import load_dotenv
 load_dotenv('webexintegration/webexintegration.env')
 
 assert all((os.getenv('CLIENT_ID'), os.getenv('CLIENT_SECRET'), os.getenv('REDIRECT_URI'), os.getenv('SCOPE'))), \
@@ -12,8 +13,8 @@ assert all((os.getenv('CLIENT_ID'), os.getenv('CLIENT_SECRET'), os.getenv('REDIR
 
 from app import create_app, socketio
 from redis import Redis
+
 from app.interactive import Token
-import logging
 
 #logging.basicConfig(level=logging.DEBUG)
 
