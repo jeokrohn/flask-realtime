@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile-redis
     volumes:
-      - $PWD/redis_data:/data
+      - "./redis_data:/data"
 
   flask:
     image: app-flask
@@ -14,9 +14,8 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      # remove the following two for production deployment
-      - $PWD/app:/home/flaskdemo/app
-      - $PWD/webexintegration:/home/flaskdemo/webexintegration
+      - "./app:/home/flaskdemo/app"
+      - "./webexintegration:/home/flaskdemo/webexintegration"
     depends_on:
       - redis
 
@@ -27,8 +26,8 @@ services:
       dockerfile: Dockerfile-nginx
     # remove volumes for production deployment
     volumes:
-      - $PWD/nginx:/etc/nginx
-      - $PWD/app/static/:/usr/share/nginx/html/static
+      - "./nginx:/etc/nginx"
+      - "./app/static/:/usr/share/nginx/html/static"
     ports:
       - 5000:5000
     depends_on:

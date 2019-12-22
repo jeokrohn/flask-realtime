@@ -3,12 +3,14 @@ services:
   redis:
     image: jeokrohn/app-redis
     volumes:
-      - $PWD/redis_data:/data
+      - "./redis_data:/data"
 
   flask:
     image: jeokrohn/app-flask
     depends_on:
       - redis
+    volumes:
+      -"./webexintegration:/home/flaskdemo/webexintegration"
 
   nginx:
     image: jeokrohn/app-nginx
