@@ -19,3 +19,4 @@ jobs:
         docker push ${{ secrets.DOCKER_USER }}/app-flask
         docker push ${{ secrets.DOCKER_USER }}/app-nginx
         docker push ${{ secrets.DOCKER_USER }}/app-redis
+        docker logout
