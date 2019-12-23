@@ -4,7 +4,7 @@ $(document).ready(function(){
     socket.on("output", function(msg){
         console.log("Received new line: " + msg);
         $('#log').append(msg.data + '<br>');
-        $('#log').scrollTop = 10000;
+        $('#log').scrollTop(10000000);
     });
 
     $('button#start').on('click', function(event){

@@ -3,6 +3,7 @@ Basic asynchronous Webex Teams API helper.
 """
 from logging import getLogger
 import asyncio
+from dataclasses import dataclass
 from typing import Optional, List, AsyncIterator, Tuple, Dict, Callable
 
 import webexteamssdk
@@ -12,20 +13,19 @@ import aiohttp
 log = getLogger(__name__)
 
 
+@dataclass
 class MeetingInfo:
     """
     Return value of space_meeting_details() call
     """
     __slots__ = ['roomId', 'meetingLink', 'sipAddress', 'meetingNumber', 'callInTollFreeNumber', 'callInTollNumber']
 
-    def __init__(self, roomId, meetingLink, sipAddress, meetingNumber, callInTollFreeNumber, callInTollNumber):
-        self.roomId = roomId
-        self.meetingLink = meetingLink
-        self.sipAddress = sipAddress
-        self.meetingNumber = meetingNumber
-        self.callInTollFreeNumber = callInTollFreeNumber
-        self.callInTollNumber = callInTollNumber
-
+    roomId: str
+    meetingLink: str
+    sipAddress: str
+    meetingNumber: str
+    callInTollFreeNumber: str
+    callInTollNumber: str
 
 class WebexTeamsAsyncAPI:
     """
