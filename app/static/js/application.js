@@ -1,10 +1,13 @@
+"use strict"
 $(document).ready(function(){
-    var socket=io.connect();
+    let socket=io.connect();
 
     socket.on("output", function(msg){
-        console.log("Received new line: " + msg);
-        $('#log').append(msg.data + '<br>');
-        $('#log').scrollTop(10000000);
+        // console.log("Received new line: " + msg.data);
+        let log = document.getElementById("log");
+        let e = $('#log')
+        e.append(msg.data + '<br>');
+        e.scrollTop(log.scrollHeight);
     });
 
     $('button#start').on('click', function(event){

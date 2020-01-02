@@ -1,4 +1,5 @@
 #!/bin/sh
+# build all three docker images, tag them, and push them to docker hub
 docker-compose -f docker-compose-dev.yml build && \
   docker tag flask-realtime-flask jeokrohn/flask-realtime-flask && \
   docker tag flask-realtime-nginx jeokrohn/flask-realtime-nginx && \
