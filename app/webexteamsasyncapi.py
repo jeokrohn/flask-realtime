@@ -27,19 +27,21 @@ class MeetingInfo:
     callInTollFreeNumber: str
     callInTollNumber: str
 
+
 class WebexTeamsAsyncAPI:
     """
     Basis asynchronous Webex Teams API handler
     """
     BASE = 'https://api.ciscospark.com/v1'
     RETRIES_ON_CLIENT_CONNECTOR_ERRORS = 3
-    CONCURRENT_REQUESTS = 40
+    RETRIES_ON_502 = 3
+    CONCURRENT_REQUESTS = 100
     MAX_WAIT_ON_429 = 20
 
-    def __init__(self, access_token: str, base=BASE):
+    def __init__(self, access_token: str, base=BASE, concurrent_requests=CONCURRENT_REQUESTS):
         self.access_token = access_token
         # semaphore to limit number of concurrent requests against the Webex Teams API
-        self.semaphore = asyncio.Semaphore(WebexTeamsAsyncAPI.CONCURRENT_REQUESTS)
+        self.semaphore = asyncio.Semaphore(concurrent_requests)
         self.base = base
 
     @property
@@ -70,6 +72,7 @@ class WebexTeamsAsyncAPI:
         headers = kwargs.pop('headers', dict())
         headers.update(self.auth_header)
         client_connector_errors = 0
+        status_502 = 0
         while True:
             # get semaphore to limit the number of concurrent requests
             async with self.semaphore:
@@ -85,9 +88,20 @@ class WebexTeamsAsyncAPI:
                                         f'{method} {url} ')
                             continue
                         raise
+                    if r.status == 502:
+                        # sometimes requests simply fail... Retry
+                        status_502 += 1
+                        if status_502 < WebexTeamsAsyncAPI.RETRIES_ON_502:
+                            log.warning(f'got 502: retry ({status_502}/'
+                                        f'{WebexTeamsAsyncAPI.RETRIES_ON_502}), '
+                                        f'{method} {url} ')
+                            continue
                     if r.status != 429:
                         r.raise_for_status()
-                        data = await r.json()
+                        if r.status == 204:
+                            data = dict()
+                        else:
+                            data = await r.json()
                         break
                 # async with aiohttp....
             # async with WebexTeamsAsyncAPI.semaphore
@@ -103,23 +117,23 @@ class WebexTeamsAsyncAPI:
         return r, data
 
     async def get(self, url: str, **kwargs) -> dict:
-        _, data = await self.request('GET', url, kwargs=kwargs)
+        _, data = await self.request('GET', url, **kwargs)
         return data
 
     async def put(self, url: str, data=None, json=None, **kwargs) -> dict:
-        _, data = await self.request('PUT', url, data=data, json=json, kwargs=kwargs)
+        _, data = await self.request('PUT', url, data=data, json=json, **kwargs)
         return data
 
     async def post(self, url: str, data=None, json=None, **kwargs) -> dict:
-        _, data = await self.request('POST', url, data=data, json=json, kwargs=kwargs)
+        _, data = await self.request('POST', url, data=data, json=json, **kwargs)
         return data
 
     async def delete(self, url: str, **kwargs) -> dict:
-        _, data = await self.request('DELETE', url, kwargs=kwargs)
+        _, data = await self.request('DELETE', url, **kwargs)
         return data
 
     async def update(self, url: str, **kwargs) -> dict:
-        _, data = await self.request('GET', url, kwargs=kwargs)
+        _, data = await self.request('GET', url, **kwargs)
         return data
 
     def endpoint(self, domain: str) -> str:
@@ -188,7 +202,7 @@ class WebexTeamsAsyncAPI:
     async def update_space(self, p_roomId: str, p_title: str):
         url = f'{self.rooms_endpoint}/{p_roomId}'
         data = {'title': p_title}
-        data = await self.put(url, data=data)
+        data = await self.put(url, json=data)
         return webexteamssdk.Room(data)
 
     async def delete_space(self, p_roomId: str) -> None:
@@ -213,7 +227,7 @@ class WebexTeamsAsyncAPI:
                                 p_isModerator: Optional[bool] = None) -> webexteamssdk.Membership:
         url = self.membership_endpoint
         data = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and v is not None}
-        r = await self.post(url=url, data=data)
+        r = await self.post(url=url, json=data)
         return webexteamssdk.Membership(r)
 
     async def membership_details(self, p_membershipId) -> webexteamssdk.Membership:
@@ -223,7 +237,7 @@ class WebexTeamsAsyncAPI:
 
     async def update_membership(self, p_membershipId: str, p_isModerator: bool) -> webexteamssdk.Membership:
         url = f'{self.membership_endpoint}/{p_membershipId}'
-        r = await self.put(url, data={'isModerator': p_isModerator})
+        r = await self.put(url, json={'isModerator': p_isModerator})
         return webexteamssdk.Membership(r)
 
     async def delete_membership(self, p_membershipId) -> None:
@@ -250,7 +264,7 @@ class WebexTeamsAsyncAPI:
                             p_licenses: Optional[List[str]] = None) -> webexteamssdk.Person:
         url = self.people_endpoint
         data = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and v is not None}
-        r = await self.post(url=url, data=data)
+        r = await self.post(url=url, json=data)
         return webexteamssdk.Person(r)
 
     async def people_details(self, p_personId) -> webexteamssdk.Person:
@@ -266,7 +280,7 @@ class WebexTeamsAsyncAPI:
                             p_licenses: Optional[List[str]] = None) -> webexteamssdk.Membership:
         url = f'{self.people_endpoint}/{p_personId}'
         data = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and k != 'p_personId' and v is not None}
-        r = await self.put(url, data=data)
+        r = await self.put(url, json=data)
         return webexteamssdk.Membership(r)
 
     async def delete_person(self, p_personId) -> None:
@@ -290,6 +304,30 @@ class WebexTeamsAsyncAPI:
                       p_max: Optional[int] = None) -> AsyncIterator[webexteamssdk.Message]:
         params = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and v is not None}
         return self.pagination(url=self.messages_endpoint, params=params, factory=webexteamssdk.Message)
+
+    def list_direct_messages(self, p_personId: Optional[str] = None,
+                             p_personEmail: Optional[str] = None) -> AsyncIterator[webexteamssdk.Message]:
+        params = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and v is not None}
+        url = f'{self.messages_endpoint}/direct'
+        return self.pagination(url=url, params=params, factory=webexteamssdk.Message)
+
+    async def create_message(self, p_roomId: Optional[str] = None, p_toPersonId: Optional[str] = None,
+                             p_toPersonEmail: Optional[str] = None, p_text: Optional[str] = None,
+                             p_markdown: Optional[str] = None) -> webexteamssdk.Message:
+        params = {k[2:]: v for k, v in locals().items() if k.startswith('p_') and v is not None}
+        url = f'{self.messages_endpoint}'
+        r = await self.post(url=url, json=params)
+        return webexteamssdk.Message(r)
+
+    async def get_message_detail(self, p_messageId: str) -> webexteamssdk.Message:
+        url = f'{self.messages_endpoint}/{p_messageId}'
+        r = await self.get(url=url)
+        return webexteamssdk.Message(r)
+
+    async def delete_message(self, p_messageId: str) -> None:
+        url = f'{self.messages_endpoint}/{p_messageId}'
+        await self.delete(url=url)
+        return
 
     def __repr__(self):
         return f'WebexTeamsAsyncAPI'

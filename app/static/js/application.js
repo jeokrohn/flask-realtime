@@ -10,10 +10,21 @@ $(document).ready(function(){
         e.scrollTop(log.scrollHeight);
     });
 
-    $('button#start').on('click', function(event){
+    $('button#start-space-stats').on('click', function(event){
         $('#log').empty();
-        socket.emit('start_request');
+        socket.emit('start_space_stats');
     });
+
+    $('button#start-create-spaces').on('click', function(event){
+        $('#log').empty();
+        socket.emit('start_create_spaces');
+    });
+
+    $('button#start-delete-spaces').on('click', function(event){
+        $('#log').empty();
+        socket.emit('start_delete_spaces');
+    });
+
 
     $('button#stop').on('click', function(event){
         socket.emit('stop_request');
