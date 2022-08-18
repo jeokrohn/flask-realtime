@@ -38,11 +38,30 @@ class WebexTeamsAsyncAPI:
     CONCURRENT_REQUESTS = 100
     MAX_WAIT_ON_429 = 20
 
-    def __init__(self, access_token: str, base=BASE, concurrent_requests=CONCURRENT_REQUESTS):
+    def __init__(self, access_token: str, base=BASE, concurrent_requests=CONCURRENT_REQUESTS,
+                 session: aiohttp.ClientSession = None):
         self.access_token = access_token
         # semaphore to limit number of concurrent requests against the Webex Teams API
         self.semaphore = asyncio.Semaphore(concurrent_requests)
         self.base = base
+        if session is None:
+            self.session = aiohttp.ClientSession()
+            self.close_session = True
+        else:
+            self.session = session
+            self.close_session = False
+
+    async def close(self):
+        s = self.session
+        if self.close_session and s is not None:
+            await s.close()
+            self.session = None
+
+    async def __aenter__(self) -> 'WebexTeamsAsyncAPI':
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self.close()
 
     @property
     def bearer(self):
@@ -74,36 +93,35 @@ class WebexTeamsAsyncAPI:
         client_connector_errors = 0
         status_502 = 0
         while True:
-            # get semaphore to limit the number of concurrent requests
+            # limit the number of concurrent requests
             async with self.semaphore:
-                async with aiohttp.ClientSession() as session:
-                    try:
-                        r = await session.request(method, url, ssl=False, headers=headers, **kwargs)
-                    except aiohttp.ClientConnectorError:
-                        # retry on spurious sometimes ClientConnectorErrors
-                        client_connector_errors += 1
-                        if client_connector_errors < WebexTeamsAsyncAPI.RETRIES_ON_CLIENT_CONNECTOR_ERRORS:
-                            log.warning(f'got ClientConnectorError: retry ({client_connector_errors}/'
-                                        f'{WebexTeamsAsyncAPI.RETRIES_ON_CLIENT_CONNECTOR_ERRORS}), '
-                                        f'{method} {url} ')
-                            continue
-                        raise
-                    if r.status == 502:
-                        # sometimes requests simply fail... Retry
-                        status_502 += 1
-                        if status_502 < WebexTeamsAsyncAPI.RETRIES_ON_502:
-                            log.warning(f'got 502: retry ({status_502}/'
-                                        f'{WebexTeamsAsyncAPI.RETRIES_ON_502}), '
-                                        f'{method} {url} ')
-                            continue
-                    if r.status != 429:
-                        r.raise_for_status()
-                        if r.status == 204:
-                            data = dict()
-                        else:
-                            data = await r.json()
-                        break
-                # async with aiohttp....
+                try:
+                    async with self.session.request(method, url, ssl=False, headers=headers, **kwargs) as r:
+                        if r.status == 502:
+                            # sometimes requests simply fail... Retry
+                            status_502 += 1
+                            if status_502 < WebexTeamsAsyncAPI.RETRIES_ON_502:
+                                log.warning(f'got 502: retry ({status_502}/'
+                                            f'{WebexTeamsAsyncAPI.RETRIES_ON_502}), '
+                                            f'{method} {url} ')
+                                continue
+                        if r.status != 429:
+                            r.raise_for_status()
+                            if r.status == 204:
+                                data = dict()
+                            else:
+                                data = await r.json()
+                            break
+                except aiohttp.ClientConnectorError:
+                    # retry on spurious ClientConnectorErrors
+                    client_connector_errors += 1
+                    if client_connector_errors < WebexTeamsAsyncAPI.RETRIES_ON_CLIENT_CONNECTOR_ERRORS:
+                        log.warning(f'got ClientConnectorError: retry ({client_connector_errors}/'
+                                    f'{WebexTeamsAsyncAPI.RETRIES_ON_CLIENT_CONNECTOR_ERRORS}), '
+                                    f'{method} {url} ')
+                        continue
+                    raise
+
             # async with WebexTeamsAsyncAPI.semaphore
             # on 429 we need to wait some time and then retry
             # waiting has to happen outside of the context protected by the semaphore: we don't want to block
@@ -199,7 +217,7 @@ class WebexTeamsAsyncAPI:
         data = await self.get(url)
         return MeetingInfo(**data)
 
-    async def update_space(self, p_roomId: str, p_title: str):
+    async def update_space(self, p_roomId: str, p_title: str) -> webexteamssdk.Room:
         url = f'{self.rooms_endpoint}/{p_roomId}'
         data = {'title': p_title}
         data = await self.put(url, json=data)

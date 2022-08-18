@@ -71,7 +71,7 @@ class PipeIO(io.TextIOBase):
 
 class FlaskThread(Thread):
     """
-    Thread with stdout redirected to a a socket linked to a eventlet sending all data received from the socket as
+    Thread with stdout redirected to a socket linked to an eventlet sending all data received from the socket as
     messages to a webesocket so that it can then be displayed on a web page
     https://stackoverflow.com/questions/14890997/redirect-stdout-to-a-file-only-for-a-specific-thread
     https://docs.python.org/3/library/socket.html#socket.socket.makefile
@@ -98,7 +98,7 @@ class FlaskThread(Thread):
         self.pipe: socket.SocketType = s1
         self.green_pipe = s2
         self.green_thread = eventlet.spawn(self._pipe_processor)
-        super(FlaskThread, self).__init__(target=self._wrapped_target, name=name, args=args, kwargs=kwargs)
+        super().__init__(target=self._wrapped_target, name=name, args=args, kwargs=kwargs)
 
     # registry mapping from sid to FlaskThread
     _registry: Dict[str, 'FlaskThread'] = {}

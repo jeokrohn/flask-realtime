@@ -77,7 +77,7 @@ class Token:
     MIN_TOKEN_LIFETIME = 300
 
     def __init__(self, user_id, access_token, expires_in, refresh_token, refresh_token_expires_in,
-                 access_token_expires_at=None, refresh_token_expires_at=None):
+                 access_token_expires_at=None, refresh_token_expires_at=None, **kwargs):
         assert Token._redis is not None
         self.user_id: str = user_id
         self.access_token: str = access_token

@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+werkzeug = "*"
+flask = "*"
+flask-session = "*"
+flask-bootstrap = "*"
+flask-socketio = "*"
+python-dotenv = "*"
+requests = "*"
+eventlet = "*"
+redis = "*"
+webexteamssdk = "*"
+aiohttp = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

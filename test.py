@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import logging
 
 from dotenv import load_dotenv
@@ -13,8 +14,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     redis_session = Redis()
     Token.set_redis(redis_session)
-    config=dict(
-        SESSION_REDIS = redis_session
+    config = dict(
+        SESSION_REDIS=redis_session
     )
     logging.getLogger('app.flaskthread').setLevel(logging.DEBUG)
     logging.getLogger('app.flaskthread.io').setLevel(logging.INFO)

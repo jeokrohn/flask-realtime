@@ -11,8 +11,10 @@ from .interactive import Token
 
 log = logging.getLogger(__name__)
 
+
 class MyException(Exception):
     pass
+
 
 async def space_stats(api: WebexTeamsAsyncAPI,
                       space: webexteamssdk.Room,

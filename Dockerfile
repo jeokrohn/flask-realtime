@@ -1,25 +1,37 @@
-FROM python:3.7-alpine
+FROM python:3.10-alpine as base
 
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONFAULTHANDLER 1
+
+FROM base as python-deps
+
+# install pipenv and gcc
+RUN pip install pipenv
+RUN apk update && apk --no-cache add build-base
+
+# Install python dependencies in /.venv
+COPY Pipfile .
+COPY Pipfile.lock .
+RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
+
+FROM base as runtime
+
+# Copy virtual env from python-deps stage
+COPY --from=python-deps /.venv /.venv
+ENV PATH="/.venv/bin:$PATH"
+
+# creae new user
 RUN adduser -D flaskdemo
-
 WORKDIR /home/flaskdemo
+USER flaskdemo
 
-COPY requirements.txt ./
+COPY wsgi.py ./
 
-RUN python -m venv venv && \
-    venv/bin/pip install -U pip && \
-    apk add --no-cache build-base && \
-    venv/bin/pip install -r requirements.txt && \
-    apk del build-base
-
-COPY wsgi.py boot.sh ./
 RUN mkdir webexintegration
 COPY webexintegration.env webexintegration/
 
 COPY app app
-RUN chmod +x boot.sh && \
-    chown flaskdemo:flaskdemo ./
+RUN chown flaskdemo:flaskdemo ./
 
-USER flaskdemo
 EXPOSE 5000
-ENTRYPOINT ["./boot.sh"]
+ENTRYPOINT ["python", "wsgi.py"]

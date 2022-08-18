@@ -15,7 +15,7 @@ thread_proxies: Dict[int, io.TextIOBase] = {}
 _default_stdout = sys.stdout
 
 
-def redirect(f:io.TextIOBase)->io.TextIOBase:
+def redirect(f: io.TextIOBase) -> io.TextIOBase:
     """
     Set stdout redirection for current thread
     :param f: file like object stdout should be redirected to
@@ -26,7 +26,7 @@ def redirect(f:io.TextIOBase)->io.TextIOBase:
     return thread_proxies[ident]
 
 
-def end_redirect()->None:
+def end_redirect() -> None:
     """
     End stdout redirection for current thread
     :return: None

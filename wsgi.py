@@ -6,6 +6,7 @@ import os
 # directory
 # For the test environment you want to make sure to create a webexintegration directory with the config file
 from dotenv import load_dotenv
+
 load_dotenv('webexintegration/webexintegration.env')
 
 assert all((os.getenv('CLIENT_ID'), os.getenv('CLIENT_SECRET'), os.getenv('REDIRECT_URI'), os.getenv('SCOPE'))), \
@@ -16,7 +17,7 @@ from redis import Redis
 
 from app.interactive import Token
 
-#logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 # this guys is a little "chatty" at level INFO
 logging.getLogger('engineio.server').setLevel(logging.WARNING)
