@@ -1,0 +1,28 @@
+[project]
+name = ""
+version = "0.0.1"
+requires-python = ">=3.10, <4"
+dependencies = [
+    "werkzeug",
+    "flask",
+    "flask-session",
+    "flask-bootstrap",
+    "flask-socketio",
+    "python-dotenv",
+    "requests",
+    "eventlet",
+    "redis",
+    "webexteamssdk",
+    "aiohttp",
+]
+
+[dependency-groups]
+dev = []
+
+[tool.uv]
+package = false
+default-groups = "all"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
